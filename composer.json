@@ -1,0 +1,30 @@
+{
+    "name": "Yuanyuanli/xhprof-webman",
+    "description": "适用于webman的xhprof扩展",
+    "keywords": [
+        "yuanyuanli",
+        "erik",
+        "xhprof",
+        "webman"
+    ],
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=7.2",
+        "ext-tideways_xhprof": "*",
+        "workerman/webman": "*",
+        "monolog/monolog": "*",
+        "illuminate/redis": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Yuanyuanli\\Xhprof\\Webman\\": "src/Webman"
+        }
+    },
+    "authors": [
+        {
+            "name": "bensharp",
+            "email": "275008147@qq.com"
+        }
+    ]
+}
