@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Yuanyuanli\Xhprof\Webman;
 
-use Shiroi\Xhprof\Webman\XhprofLib\Utils\XHProfRunsDefault;
-use Shiroi\Xhprof\Webman\XhprofLib\Display\XhprofDisplay;
+use Yuanyuanli\Xhprof\Webman\XhprofLib\Utils\XHProfRunsDefault;
+use Yuanyuanli\Xhprof\Webman\XhprofLib\Display\XhprofDisplay;
 
 class Xhprof
 {
