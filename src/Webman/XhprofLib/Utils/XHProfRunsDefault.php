@@ -54,8 +54,7 @@ class XHProfRunsDefault implements XHProfRuns
     {
         $request = Xhprof::getRequest();
         $method = $request->method();
-        $http = $request->header('x-forwarded-proto');
-        $http = !empty($http) ? $http . "://" : "";
+       
         $requestTimeFloat = explode(' ', microtime());
         $requestTsMicro = array('sec' => $requestTimeFloat[1], 'usec' => $requestTimeFloat[0] * 1000000);
 
@@ -67,7 +66,7 @@ class XHProfRunsDefault implements XHProfRuns
         }
 
         $saveData = [
-            'url' => $http . parse_url($uri, PHP_URL_PATH),
+            'url' =>  parse_url($uri, PHP_URL_PATH),
             'server_name' => $request->host() ?: (isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : ''),
             'get' => json_encode($queryParams),
             'server' => json_encode([
