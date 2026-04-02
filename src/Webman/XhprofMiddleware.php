@@ -20,8 +20,8 @@ class XhprofMiddleware implements MiddlewareInterface
 
         $extension = extension_loaded('tideways_xhprof');
         // if(false==$extension) return response()->withBody("请安装tideways_xhprof扩展");
-        $redis = extension_loaded("redis");
-        if (false == $redis) return response()->withBody("请安装redis扩展");
+        //$redis = extension_loaded("redis");
+        //if (false == $redis) return response()->withBody("请安装redis扩展");
         Xhprof::$ignore_url_arr = $config['ignore_url_arr'] ?: "/test";
         Xhprof::$time_limit = $config['time_limit'] ?: 0;
         Xhprof::$log_num = $config['log_num'] ?: 1000;
