@@ -32,12 +32,43 @@ class XHProfRunsDefault implements XHProfRuns
         $res = Redis::get(Xhprof::$key_prefix . ':xhprof_log:' . $run_id);
         return unserialize($res);
     }
+    /**
+     * 获取Webman顶层闭包的XHProf性能数据
+     * @param array $xhprof_data XHProf/Tideways返回的性能数组
+     * @return array 包含wt/cpu/mu/ct的性能数据，空数组表示未找到
+     */
+   public static function getWebmanAppClosureData(array $xhprof_data): array
+    {
+        // 优先匹配精准键名
+        $target_keys = [
+            'Webman\\App::Webman\\{closure}',
+            'Webman\\App::Webman\\{closure}@1', // 兼容不同版本的闭包命名
+            'Webman\\App::Webman\\{closure}@2'
+        ];
 
+        foreach ($target_keys as $key) {
+            if (isset($xhprof_data[$key])) {
+                return $xhprof_data[$key];
+            }
+        }
+
+        // 兜底：模糊匹配
+        foreach ($xhprof_data as $func_name => $data) {
+            if (str_starts_with($func_name, 'Webman\\App::Webman\\{closure}')) {
+                return $data;
+            }
+        }
+
+        return [];
+    }
     //实现接口方法
     public static function save_run($xhprof_data, $type, $run_id = null)
     {
+
+        $webman_app_closure_data = self::getWebmanAppClosureData($xhprof_data);
+       
         //根据响应时间判断是否需要记录
-        if (Xhprof::$time_limit > 0 && $xhprof_data['main()']['wt'] < (Xhprof::$time_limit * 1000 * 1000)) return false;
+        if (Xhprof::$time_limit > 0 && $webman_app_closure_data['wt'] < (Xhprof::$time_limit * 1000 * 1000)) return false;
         //根据忽略配置判断是否忽略当前请求
         if (!XhprofLib::isIgnore()) return false;
         //控制日志长度
@@ -46,11 +77,11 @@ class XHProfRunsDefault implements XHProfRuns
         // $run_id = self::_saveToRedis($xhprof_data);
         // 保存至数据库
 
-        self::saveToDb($xhprof_data);
+        self::saveToDb($xhprof_data,$webman_app_closure_data);
         return $run_id;
     }
 
-    private static function saveToDb($xhprof_data)
+    private static function saveToDb($xhprof_data, $webman_app_closure_data)
     {
         $request = Xhprof::getRequest();
         $method = $request->method();
@@ -81,11 +112,11 @@ class XHProfRunsDefault implements XHProfRuns
             'request_time' => $requestTsMicro['sec'],
             'request_time_micro' => $requestTsMicro['usec'],
             'profile' => json_encode(["profile" => $xhprof_data, "sql" => []]),
-            'mu' => $xhprof_data['main()']['mu'],
-            'pmu' => $xhprof_data['main()']['pmu'],
-            'ct' => $xhprof_data['main()']['ct'],
-            'cpu' => $xhprof_data['main()']['cpu'],
-            'wt' => $xhprof_data['main()']['wt'],
+            'mu' => $webman_app_closure_data['mu'],
+            'pmu' => $webman_app_closure_data['pmu'],
+            'ct' => $webman_app_closure_data['ct'],
+            'cpu' => $webman_app_closure_data['cpu'],
+            'wt' => $webman_app_closure_data['wt'],
         ];
 
         return Db::table(Xhprof::$table_name)->insert($saveData);
