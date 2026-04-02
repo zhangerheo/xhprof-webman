@@ -29,7 +29,9 @@ class XhprofMiddleware implements MiddlewareInterface
         Xhprof::$table_name = $config['table_name'] ?: 'php_monitor';
 
         if ($xhprof && $extension) Xhprof::xhprofStart();
+         // 执行接口逻辑
         $response = $next($request);
+         // 停止采集并获取数据
         if ($xhprof && $extension) Xhprof::xhprofStop();
         return $response;
     }
