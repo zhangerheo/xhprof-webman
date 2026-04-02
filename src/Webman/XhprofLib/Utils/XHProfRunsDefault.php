@@ -12,18 +12,7 @@ class XHProfRunsDefault implements XHProfRuns
 {
     public function __construct($dir = null)
     {
-        if (empty($dir)) {
-            $dir = ini_get("xhprof.output_dir");
-            if (empty($dir)) {
-                $dir = "/tmp";
-                XhprofLib::xhprof_error("Warning: Must specify directory location for XHProf runs. " .
-                    "Trying {$dir} as default. You can either pass the " .
-                    "directory location as an argument to the constructor " .
-                    "for XHProfRuns_Default() or set xhprof.output_dir " .
-                    "ini param.");
-            }
-        }
-        self::$dir = $dir;
+         
     }
 
     public static function get_run($run_id, $type, &$run_desc)
@@ -66,7 +55,7 @@ class XHProfRunsDefault implements XHProfRuns
     {
 
         $webman_app_closure_data = self::getWebmanAppClosureData($xhprof_data);
-       
+
         //根据响应时间判断是否需要记录
         if (Xhprof::$time_limit > 0 && $webman_app_closure_data['wt'] < (Xhprof::$time_limit * 1000 * 1000)) return false;
         //根据忽略配置判断是否忽略当前请求
@@ -175,82 +164,5 @@ class XHProfRunsDefault implements XHProfRuns
     }
 
 
-    public static function list_runs2()
-    {
-        $echo_page = "<meta charset='utf-8'>";
-        $echo_page .= "<hr/>Existing runs:\n<ul>\n";
-        $echo_page .= '<li><small class="small_filemtime">请求时间</small><small class="small_wt">耗时(s)</small><small class="small_wt">内存(MB)</small><small class="small_log">xhprof日志</small><small class="small_method">Method</small><small>请求url</small></li>';
-        //取所有请求数据
-        $run_id_lists = Redis::lrange(Xhprof::$key_prefix . ':run_id', 0, Xhprof::$log_num);
-        foreach ($run_id_lists as $run_id) {
-            $res = Redis::get(Xhprof::$key_prefix . ":request_log:" . $run_id);
-            if (!$res) continue;
-            $request_arr = json_decode($res, true);
-            if (!is_array($request_arr)) continue;
-            //耗时是否标红显示
-            $wtClass = $request_arr['wt'] > Xhprof::$view_wtred ? "red" : "";
-            $echo_page .= '<li><small class="small_filemtime">'
-                . date("Y-m-d H:i:s", $request_arr['create_time'])
-                . '</small><small class="small_wt ' . $wtClass . '">' . $request_arr['wt'] . '</small></small><small class="small_wt">' . $request_arr['mu'] . '</small><small class="small_log"><a href="' . htmlentities($_SERVER['SCRIPT_NAME'])
-                . '?run=' . $run_id . '&source=xhprof_foo&requrl=' . urlencode($request_arr['request_uri']) . '">'
-                . $run_id . "</a></small>"
-                . '<small class="small_method">' . $request_arr['method'] . '</small>'
-                . "<small>" . $request_arr['request_uri'] . "</small></li>\n";
-        }
-        $echo_page .= "</ul>\n";
-        return $echo_page;
-    }
 
-    public static function list_runs()
-    {
-        //取所有请求数据
-        $run_id_lists = Redis::lrange(Xhprof::$key_prefix . ':run_id', 0, Xhprof::$log_num);
-        $table_html = "";
-        foreach ($run_id_lists as $run_id) {
-            $res = Redis::get(Xhprof::$key_prefix . ":request_log:" . $run_id);
-            if (!$res) continue;
-            $request_arr = json_decode($res, true);
-            if (!is_array($request_arr)) continue;
-            //耗时是否标红显示
-            $wtClass = $request_arr['wt'] > Xhprof::$view_wtred ? "red" : "";
-            $http = Xhprof::getRequest()->header('x-forwarded-proto');
-            $http = !empty($http) ? $http . ":" : "http:";
-            $path = $http . Xhprof::getRequest()->url();
-            $tr = '<tr>'
-                . '<td>' . $request_arr['method'] . '</td>'
-                . '<td><a href="' . htmlentities($path) . '?all=1&run=' . $run_id . '&source=xhprof_foo&requrl=' . urlencode($request_arr['request_uri']) . '">' . $request_arr['request_uri'] . "</a></td>"
-                . '<td>' . date("Y-m-d H:i:s", $request_arr['create_time']) . '</td>'
-                . '<td class="' . $wtClass . '">' . $request_arr['wt'] . '</small></small>'
-                . '<td>' . $request_arr['mu'] . '</td>'
-                . '<td>' . $request_arr['ip'] . '</td>'
-                . '</tr>';
-            $table_html .= $tr;
-        }
-
-        $str_html = <<<HTML
-<div class="container-fluid" style="width: 90%">
-<div class="row">
-<div class="col-xs-12">
-<!--第二步：添加如下 HTML 代码-->
-<table id="table_id_example" class="table table-bordered table-hover">
-    <thead>
-        <tr>
-            <th width="40">方法</th>
-            <th>请求地址</th>
-            <th>请求时间</th>
-            <th width="90">运行耗时(s)</th>
-            <th width="100">内存占用(Mb)</th>
-            <th width="100">IP地址</th>
-        </tr>
-    </thead>
-    <tbody>
-        {$table_html}
-    </tbody>
-</table>
-</div>
-</div>
-</div>
-HTML;
-        return $str_html;
-    }
 }
